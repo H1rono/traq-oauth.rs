@@ -27,9 +27,11 @@
         commonArgs = {
           inherit src;
           strictDeps = true;
+          nativeBuildInputs = [ pkgs.pkg-config ];
           # Common arguments can be set here to avoid repeating them later
           buildInputs = [
             # Add additional build inputs here
+            pkgs.openssl
           ] ++ lib.optionals pkgs.stdenv.isDarwin [
             # Additional darwin specific inputs can be set here
             pkgs.libiconv
