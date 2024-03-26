@@ -88,22 +88,21 @@ async fn shutdown(st: extract::State<AppState>) -> &'static str {
     "shutdown"
 }
 
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip(st))]
 async fn authorized(
     st: extract::State<AppState>,
     extract::Query(params): extract::Query<AuthorizedQuery>,
 ) -> &'static str {
-    tracing::info!("authorized");
+    tracing::debug!("authorized");
     if let Err(e) = st.0.send_code(params.code).await {
-        tracing::error!("failed to send authorization code {e}");
+        tracing::error!("failed to send authorization code: {e}");
     }
     "success!"
 }
 
-pub async fn listen() -> anyhow::Result<()> {
+pub async fn listen(state: AppState) -> anyhow::Result<()> {
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     let listener = TcpListener::bind(addr).await?;
-    let state = AppState::default();
     let signal_state = state.clone_without_sender();
     let app = Router::new()
         .route("/ping", routing::get(ping))
