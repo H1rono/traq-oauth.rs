@@ -18,7 +18,7 @@
           inherit system;
           overlays = [ (import rust-overlay) ];
         };
-        inherit (pkgs) lib;
+        inherit (pkgs) lib darwin;
 
         toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
@@ -33,6 +33,8 @@
           ] ++ lib.optionals pkgs.stdenv.isDarwin [
             # Additional darwin specific inputs can be set here
             pkgs.libiconv
+            darwin.Security
+            darwin.apple_sdk.frameworks.SystemConfiguration
           ];
 
           # Additional environment variables can be set directly
