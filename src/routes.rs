@@ -97,7 +97,8 @@ async fn authorized(
     if let Err(e) = st.0.send_code(params.code).await {
         tracing::error!("failed to send authorization code: {e}");
     }
-    "success!"
+    st.0.notify_shutdown().await;
+    "success! please close this page."
 }
 
 pub async fn listen(state: AppState) -> anyhow::Result<()> {
