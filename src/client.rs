@@ -1,6 +1,8 @@
 use std::{borrow::Cow, collections::HashMap};
 
 use anyhow::anyhow;
+use reqwest::multipart;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Clone)]
@@ -16,6 +18,18 @@ pub struct ClientBuilder {
     api_base_path: Option<String>,
     client_id: Option<String>,
     access_token: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Stamp {
+    id: String,
+    name: String,
+    creator_id: String,
+    created_at: String,
+    updated_at: String,
+    file_id: String,
+    is_unicode: bool,
 }
 
 #[allow(unused)]
@@ -139,5 +153,23 @@ impl Client {
             .json()
             .await?;
         Ok(me)
+    }
+
+    pub async fn add_stamp(&self, name: &str, body: &[u8]) -> anyhow::Result<Stamp> {
+        let url = format!("{}/stamps", self.api_base_path);
+        let file_content = body.to_vec();
+        let file_part = multipart::Part::bytes(file_content);
+        let form = multipart::Form::new()
+            .text("name", name.to_string())
+            .part("file", file_part);
+        let response = self
+            .inner
+            .post(url)
+            .multipart(form)
+            .send()
+            .await?
+            .json()
+            .await?;
+        Ok(response)
     }
 }
