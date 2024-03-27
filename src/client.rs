@@ -164,6 +164,7 @@ impl Client {
         Ok(me)
     }
 
+    #[tracing::instrument(skip(self, body))]
     pub async fn add_stamp(&self, name: &str, body: &[u8]) -> anyhow::Result<Stamp> {
         let url = format!("{}/stamps", self.api_base_path);
         let file_content = body.to_vec();
@@ -171,14 +172,9 @@ impl Client {
         let form = multipart::Form::new()
             .text("name", name.to_string())
             .part("file", file_part);
-        let response = self
-            .inner
-            .post(url)
-            .multipart(form)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let response = self.inner.post(url).multipart(form).send().await?;
+        tracing::debug!("POST /stamps: {}", response.status());
+        let response = response.json().await?;
         Ok(response)
     }
 }
