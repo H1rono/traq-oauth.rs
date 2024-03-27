@@ -195,6 +195,11 @@ impl Client {
             .send()
             .await?;
         tracing::debug!("POST /stamps: {}", response.status());
+        if !response.status().is_success() {
+            let body = response.text().await?;
+            tracing::error!("error message: {body}");
+            return Err(anyhow!("failed: {body}"));
+        }
         let response = response.json().await?;
         Ok(response)
     }
