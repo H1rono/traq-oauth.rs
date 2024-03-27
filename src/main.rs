@@ -20,7 +20,7 @@ async fn main() -> anyhow::Result<()> {
         .build();
 
     let route_state = routes::AppState::new(code_tx);
-    let route = tokio::spawn(routes::listen(route_state));
+    let route = tokio::spawn(routes::listen(([0, 0, 0, 0], 8080), route_state));
 
     // FIXME: macOS only
     Command::new("open")

@@ -96,9 +96,8 @@ async fn authorized(
     "success! please close this page."
 }
 
-pub async fn listen(state: AppState) -> anyhow::Result<()> {
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
-    let listener = TcpListener::bind(addr).await?;
+pub async fn listen(addr: impl Into<SocketAddr>, state: AppState) -> anyhow::Result<()> {
+    let listener = TcpListener::bind(addr.into()).await?;
     let signal_state = state.clone_without_sender();
     let app = Router::new()
         .route("/ping", routing::get(ping))
