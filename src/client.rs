@@ -5,6 +5,8 @@ use reqwest::multipart;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::config;
+
 #[derive(Clone)]
 pub struct Client {
     inner: reqwest::Client,
@@ -92,6 +94,13 @@ impl ClientBuilder {
 impl Client {
     pub fn builder() -> ClientBuilder {
         ClientBuilder::new()
+    }
+
+    pub fn export_config(&self) -> config::Config {
+        config::Config {
+            client_id: self.client_id.clone(),
+            access_token: self.access_token.clone(),
+        }
     }
 
     pub fn authorize_endpoint(&self) -> String {

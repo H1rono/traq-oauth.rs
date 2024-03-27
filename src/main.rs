@@ -4,6 +4,7 @@ use tokio::sync::mpsc;
 use tracing_subscriber::EnvFilter;
 
 mod client;
+mod config;
 mod routes;
 
 #[tokio::main]
