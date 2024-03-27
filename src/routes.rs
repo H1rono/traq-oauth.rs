@@ -83,11 +83,6 @@ async fn ping() -> &'static str {
     "pong"
 }
 
-async fn shutdown(st: extract::State<AppState>) -> &'static str {
-    st.0.notify_shutdown().await;
-    "shutdown"
-}
-
 #[tracing::instrument(skip(st))]
 async fn authorized(
     st: extract::State<AppState>,
@@ -107,7 +102,6 @@ pub async fn listen(state: AppState) -> anyhow::Result<()> {
     let signal_state = state.clone_without_sender();
     let app = Router::new()
         .route("/ping", routing::get(ping))
-        .route("/shutdown", routing::get(shutdown))
         .route("/_authorized", routing::get(authorized))
         .with_state(state);
     axum::serve(listener, app)
