@@ -166,13 +166,22 @@ impl Client {
 
     #[tracing::instrument(skip(self, body))]
     pub async fn add_stamp(&self, name: &str, body: &[u8]) -> anyhow::Result<Stamp> {
+        let Some(access_token) = &self.access_token else {
+            return Err(anyhow!("authorize required before calling API"));
+        };
         let url = format!("{}/stamps", self.api_base_path);
         let file_content = body.to_vec();
         let file_part = multipart::Part::bytes(file_content);
         let form = multipart::Form::new()
             .text("name", name.to_string())
             .part("file", file_part);
-        let response = self.inner.post(url).multipart(form).send().await?;
+        let response = self
+            .inner
+            .post(url)
+            .bearer_auth(access_token)
+            .multipart(form)
+            .send()
+            .await?;
         tracing::debug!("POST /stamps: {}", response.status());
         let response = response.json().await?;
         Ok(response)
