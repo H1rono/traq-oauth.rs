@@ -34,4 +34,10 @@ impl Config {
     pub fn from_env_or_file(path: impl AsRef<Path>) -> anyhow::Result<Self> {
         Self::from_env().or(Self::from_file(path))
     }
+
+    pub fn save_to(&self, path: impl AsRef<Path>) -> anyhow::Result<()> {
+        let json = serde_json::to_string_pretty(self)?;
+        std::fs::write(path, json)?;
+        Ok(())
+    }
 }

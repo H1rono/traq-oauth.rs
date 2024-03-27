@@ -1,4 +1,5 @@
 .env
+credential.json
 
 # Ignore direnv output
 .direnv
