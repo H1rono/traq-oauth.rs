@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, fmt::Display, path::Path};
 
 use anyhow::anyhow;
 use reqwest::multipart;
@@ -20,6 +20,13 @@ pub struct ClientBuilder {
     api_base_path: Option<String>,
     client_id: Option<String>,
     access_token: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum ImageMime {
+    Jpeg,
+    Gif,
+    Png,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -165,13 +172,18 @@ impl Client {
     }
 
     #[tracing::instrument(skip(self, body))]
-    pub async fn add_stamp(&self, name: &str, body: &[u8]) -> anyhow::Result<Stamp> {
+    pub async fn add_stamp(
+        &self,
+        name: &str,
+        mime: ImageMime,
+        body: &[u8],
+    ) -> anyhow::Result<Stamp> {
         let Some(access_token) = &self.access_token else {
             return Err(anyhow!("authorize required before calling API"));
         };
         let url = format!("{}/stamps", self.api_base_path);
         let file_content = body.to_vec();
-        let file_part = multipart::Part::bytes(file_content);
+        let file_part = multipart::Part::bytes(file_content).mime_str(&mime.to_string())?;
         let form = multipart::Form::new()
             .text("name", name.to_string())
             .part("file", file_part);
@@ -185,5 +197,30 @@ impl Client {
         tracing::debug!("POST /stamps: {}", response.status());
         let response = response.json().await?;
         Ok(response)
+    }
+}
+
+impl Display for ImageMime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Jpeg => write!(f, "image/jpeg"),
+            Self::Gif => write!(f, "image/gif"),
+            Self::Png => write!(f, "image/png"),
+        }
+    }
+}
+
+impl ImageMime {
+    pub fn try_from_path(path: impl AsRef<Path>) -> anyhow::Result<Self> {
+        let path = path.as_ref();
+        let Some(extension) = path.extension().and_then(|s| s.to_str()) else {
+            return Err(anyhow!("received invalid path format"));
+        };
+        match extension {
+            "jpg" | "jpeg" => Ok(Self::Jpeg),
+            "gif" => Ok(Self::Gif),
+            "png" => Ok(Self::Png),
+            _ => Err(anyhow!("unexpected extension")),
+        }
     }
 }

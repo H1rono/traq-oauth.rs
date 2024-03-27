@@ -1,6 +1,6 @@
 use tracing_subscriber::EnvFilter;
 
-use traq_oauth::{config, load_client, CREDENTIAL_FILE_PATH};
+use traq_oauth::{client::ImageMime, config, load_client, CREDENTIAL_FILE_PATH};
 
 #[tokio::main]
 #[tracing::instrument]
@@ -13,8 +13,9 @@ async fn main() -> anyhow::Result<()> {
 
     let (stamp_name, file_path) = load_args()?;
     tracing::debug!(%stamp_name, %file_path);
+    let mime = ImageMime::try_from_path(&file_path)?;
     let content = std::fs::read(file_path)?;
-    let stamp_info = client.add_stamp(&stamp_name, &content).await?;
+    let stamp_info = client.add_stamp(&stamp_name, mime, &content).await?;
     tracing::info!("added stamp information is: {stamp_info:?}");
     Ok(())
 }
