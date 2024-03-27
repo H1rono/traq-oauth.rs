@@ -171,19 +171,18 @@ impl Client {
         Ok(me)
     }
 
-    #[tracing::instrument(skip(self, body))]
-    pub async fn add_stamp(
-        &self,
-        name: &str,
-        mime: ImageMime,
-        body: &[u8],
-    ) -> anyhow::Result<Stamp> {
+    #[tracing::instrument(skip(self, path))]
+    pub async fn add_stamp(&self, name: &str, path: &str) -> anyhow::Result<Stamp> {
         let Some(access_token) = &self.access_token else {
             return Err(anyhow!("authorize required before calling API"));
         };
         let url = format!("{}/stamps", self.api_base_path);
-        let file_content = body.to_vec();
-        let file_part = multipart::Part::bytes(file_content).mime_str(&mime.to_string())?;
+        let file_content = std::fs::read(path)?;
+        let mime = ImageMime::try_from_path(path)?;
+        let path = path.to_string();
+        let file_part = multipart::Part::bytes(file_content)
+            .mime_str(&mime.to_string())?
+            .file_name(path);
         let form = multipart::Form::new()
             .text("name", name.to_string())
             .part("file", file_part);
