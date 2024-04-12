@@ -24,9 +24,11 @@ impl Config {
 
     /// as json
     pub fn from_file(path: impl AsRef<Path>) -> anyhow::Result<Self> {
-        let file = File::open(path)?;
+        let path = path.as_ref();
+        let file = File::open(path).with_context(|| format!("failed to open {path:?}"))?;
         let reader = BufReader::new(file);
-        let value = serde_json::from_reader(reader)?;
+        let value = serde_json::from_reader(reader)
+            .with_context(|| format!("failed to parse {}", path.display()))?;
         Ok(value)
     }
 
