@@ -130,7 +130,7 @@ impl Client {
         let token_request_form: HashMap<&str, &str> = [
             ("grant_type", "authorization_code"),
             ("client_id", &client_id),
-            ("code", &code),
+            ("code", code),
         ]
         .into_iter()
         .collect();
