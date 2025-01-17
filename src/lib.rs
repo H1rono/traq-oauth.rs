@@ -14,17 +14,13 @@ pub async fn load_client(config: config::Config) -> anyhow::Result<client::Clien
         client_id,
         access_token,
     } = config;
+    let builder = client::Client::builder()
+        .client_id(client_id)
+        .api_base_path(API_BASE_PATH);
     let client = if let Some(access_token) = access_token {
-        client::Client::builder()
-            .client_id(client_id)
-            .access_token(access_token)
-            .api_base_path(API_BASE_PATH)
-            .build()
+        builder.access_token(access_token).build()
     } else {
-        let client = client::Client::builder()
-            .client_id(client_id)
-            .api_base_path(API_BASE_PATH)
-            .build();
+        let client = builder.build();
         oauth2_authorize(client).await?
     };
     Ok(client)
