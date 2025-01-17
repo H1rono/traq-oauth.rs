@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, fmt::Display, path::Path};
+use std::{collections::HashMap, fmt::Display, path::Path};
 
 use anyhow::anyhow;
 use reqwest::multipart;
@@ -15,10 +15,9 @@ pub struct Client {
     access_token: Option<String>,
 }
 
-#[derive(Clone, Default)]
-pub struct ClientBuilder {
-    api_base_path: Option<String>,
-    client_id: Option<String>,
+pub struct ClientBuilder<ApiBasePath = (), ClientId = ()> {
+    api_base_path: ApiBasePath,
+    client_id: ClientId,
     access_token: Option<String>,
 }
 
@@ -41,58 +40,76 @@ pub struct Stamp {
     is_unicode: bool,
 }
 
+impl Default for ClientBuilder {
+    fn default() -> Self {
+        Self {
+            api_base_path: (),
+            client_id: (),
+            access_token: None,
+        }
+    }
+}
+
 #[allow(unused)]
 impl ClientBuilder {
     pub fn new() -> Self {
         Self::default()
     }
+}
 
+impl<ApiBasePath, ClientId> ClientBuilder<ApiBasePath, ClientId> {
+    pub fn api_base_path(self, value: impl Into<String>) -> ClientBuilder<String, ClientId> {
+        let Self {
+            api_base_path: _,
+            client_id,
+            access_token,
+        } = self;
+        ClientBuilder {
+            api_base_path: value.into(),
+            client_id,
+            access_token,
+        }
+    }
+
+    pub fn client_id(self, value: impl Into<String>) -> ClientBuilder<ApiBasePath, String> {
+        let Self {
+            api_base_path,
+            client_id: _,
+            access_token,
+        } = self;
+        ClientBuilder {
+            api_base_path,
+            client_id: value.into(),
+            access_token,
+        }
+    }
+
+    pub fn access_token(self, value: impl Into<String>) -> ClientBuilder<ApiBasePath, ClientId> {
+        let Self {
+            api_base_path,
+            client_id,
+            access_token: _,
+        } = self;
+        ClientBuilder {
+            api_base_path,
+            client_id,
+            access_token: Some(value.into()),
+        }
+    }
+}
+
+impl ClientBuilder<String, String> {
     pub fn build(self) -> Client {
-        let ClientBuilder {
+        let Self {
             api_base_path,
             client_id,
             access_token,
         } = self;
-        let api_base_path = api_base_path.unwrap_or_else(|| "https://q.trap.jp/api/v3".to_string());
-        let client_id = client_id.expect("client_id is not set");
         Client {
             inner: reqwest::Client::new(),
             api_base_path,
             client_id,
             access_token,
-        }
-    }
-
-    pub fn api_base_path<'a, S>(self, base_path: S) -> Self
-    where
-        S: Into<Cow<'a, str>>,
-    {
-        let base_path = base_path.into().into_owned();
-        Self {
-            api_base_path: Some(base_path),
-            ..self
-        }
-    }
-
-    pub fn client_id<'a, S>(self, client_id: S) -> Self
-    where
-        S: Into<Cow<'a, str>>,
-    {
-        let client_id = client_id.into().into_owned();
-        Self {
-            client_id: Some(client_id),
-            ..self
-        }
-    }
-
-    pub fn access_token<'a, S>(self, access_token: S) -> Self
-    where
-        S: Into<Cow<'a, str>>,
-    {
-        let access_token = access_token.into().into_owned();
-        Self {
-            access_token: Some(access_token),
-            ..self
         }
     }
 }
